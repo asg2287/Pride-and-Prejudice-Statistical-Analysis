@@ -1,0 +1,487 @@
+\section{Data Alignment and Sample Population Integrity}
+The raw text-mining and text-parsing pipeline captures a total of 55 unique character name instances across individual chapter tracking files to accurately preserve historical narrative references and family lineage distinctions. This raw footprint tracks entirely separate individuals, such as George Wickham and the retrospective mentions of his late father (Wickham Sr.), as well as distinct rows for active background figures like Mrs. Nicholls and static historical references like Darcy's father or Lady Anne Darcy. 
+
+When establishing the multidimensional vector matrix, all characters maintain their independent, dedicated rows within the dataset to avoid introducing a priori human editing bias. However, because highly peripheral historical figures only exist within the text as memories or conversational references within the exact same scenes as their primary family members, their numeric rows contain identical statistical distributions across the novel's continuous metrics. In multi-variable modeling, rows with identical data variance occupy the exact same space in the covariance matrix, resulting in a unique sample of $N = 51$ mathematically independent character profiles. This process does not merge separate characters narratively; rather, it ensures that the linear algebra evaluates active, unique profiles without allowing static background references to generate artificial linear dependencies or distort multidimensional distance calculations.
+
+\section{Univariate Normality Assessment (Shapiro-Wilk)}
+The narrative network was formalized by mapping individual characters into unique six-dimensional vectors across key structural metric components: Name ($N$), Discussion of Character by Others ($DC$), Communication ($C$), Interiority ($I$), Description by Narrator ($DN$), and Action ($A$). Standard parametric multivariate implementations assume underlying univariate normality within these vector components. A Shapiro-Wilk test was executed across each individual metric to evaluate the null hypothesis ($H_0$) that the dimensions are normally distributed.
+
+\begin{table}[H]
+\centering
+\caption{Shapiro-Wilk Univariate Normality Diagnostics}
+\label{tab:shapiro}
+\vspace{2mm}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric Vector Component} & \textbf{W Statistic} & \textbf{\textit{p}-value} \\
+\midrule
+Name ($N$)   & 0.5408 & $2.148 \times 10^{-11}$ \\
+Discussion of Character by Others ($DC$)      & 0.5606 & $4.030 \times 10^{-11}$ \\
+Communication ($C$)              & 0.4499 & $1.486 \times 10^{-12}$ \\
+Interiority ($I$)           & 0.2760 & $1.932 \times 10^{-14}$ \\
+Description by Narrator ($DN$)               & 0.6182 & $2.832 \times 10^{-10}$ \\
+Action ($A$)               & 0.4343 & $9.692 \times 10^{-13}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As detailed in Table \ref{tab:shapiro}, every individual metric demonstrated extreme and statistically significant deviations from normality ($p < 0.001$). This firmly rejects the normal distribution model, mathematically confirming the authentic structural reality of the text: narrative prominence in Austen's novel is heavily right-skewed. It exhibits a steep Pareto power-law distribution where a tiny elite tier of major characters dominate the narrative space against a wide, low-weight baseline of minor figures.
+
+\section{Multivariate Singularity and Logarithmic Transformation}
+Evaluating the joint distribution of the raw six-dimensional vectors via Mardia's test initially resulted in a matrix inversion failure due to a computationally singular system. This error was caused by severe multicollinearity between the raw individual metrics and the composite total footprint score. To restore mathematical stability to the system, the redundant composite metric was dropped, preserving the six fundamental vector dimensions. 
+
+To stabilize the severe right-skewness flagged by the Shapiro-Wilk test and prevent high-magnitude vectors from completely dominating the matrix calculations, a standard logarithmic offset transformation was applied to all vector components:
+\begin{equation}
+    X_{\text{trans}} = \log_{10}(X + 1)
+\end{equation}
+
+\section{Multivariate Boundary and Bias Safeguards (Global Mahalanobis)}
+To verify that human confirmation bias did not influence the hand-assigned structural tiers (Protagonists, Major Secondary, and Minor Secondary), I calculated the Mahalanobis Distance ($D^2$) for every character across the six-dimensional log-transformed space. Unlike standard Euclidean distance, which measures straight-line distances blindly, the Mahalanobis algorithm scales individual character vectors relative to the multi-variable data centroid while adjusting for the underlying covariance matrix of the system:
+\begin{equation}
+    D^2 = ({x} - {\mu})^T {\Sigma}^{-1} ({x} - {\mu})
+\end{equation}
+Where ${x}$ represents an individual character's six-dimensional vector, ${\mu}$ represents the multi-variable data centroid, and ${\Sigma}^{-1}$ signifies the inverse covariance matrix.
+
+To establish an objective mathematical boundary for outliers, the calculated distances were evaluated against a critical threshold based on the Chi-Square ($\chi^2$) distribution with 6 degrees of freedom (corresponding to our six variables) at a strict alpha level of $\alpha = 0.001$. This strict cutoff was computed as:
+\begin{equation}
+    \chi^2_{\text{crit}}(df=6, \alpha=0.001) = 22.46
+\end{equation}
+
+The empirical evaluation confirmed that \textbf{zero character profiles breached the critical outlier threshold.} Primary focal characters (such as Elizabeth Bennet and Mr. Darcy) sit safely inside the expected multi-variable variance of the network model.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{mahalanobis_distance_plot.png}
+    \caption{Distribution of character profiles against the critical mathematical boundary ($\chi^2 = 22.46$). Even the most distinct character profiles sitting at the upper boundaries of structural variance—such as Colonel Forster ($D^2 = 21.9$) and Georgiana Darcy ($D^2 = 21.8$)—remain cleanly beneath the mathematical cutoff line.}
+    \label{fig:mahalanobis}
+\end{figure}
+
+Because no individual character exhibits an anomalous, model-breaking distance, we fail to detect any systemic classification bias within our data architecture. The categorical boundaries utilized across our character classifications are objectively justified and mathematically stable.
+
+% ==============================================================================
+% CHAPTER 4: CATEGORICAL VERIFICATION AND COMPONENT MECHANICS
+% ==============================================================================
+\chapter{Categorical Verification and Component Mechanics}
+\label{ch:categorical_verification}
+
+\section{Categorical Alignment (Pearson's $\chi^2$) and Structural Profiles}
+Before evaluating the joint vector space, a Pearson's Chi-Squared Test of Independence was executed to assess the structural validity of the three character tiers against the broader distribution of narrative prominence. Characters were sorted using a hierarchical typology established via Pareto distribution analysis, segmenting the ecosystem into Protagonists, Major Secondary ($\ge 300$ cumulative footprint), and Minor Secondary ($50-299$) cohorts. The categorical test yielded an empirical test statistic of:
+\begin{equation}
+    \chi^2 = 395.54 \quad (df = 10, \ p < 2.2 \times 10^{-16})
+\end{equation}
+
+The staggering significance of this test fundamentally rejects the assumption that minor characters are just smaller, scaled-down versions of major ones. Instead, Austen applies entirely different structural recipes depending on a character's operational role tier.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{Character_Profiles.png}
+    \caption{Structural Profiles of Narrative Tiers. The Protagonist tier (blue) displays a significant inward trajectory toward Interiority (I), distinguishing it geometrically from the secondary narrative tiers.}
+    \label{fig:structural_profiles}
+\end{figure}
+
+As visually mapping the resource allocations in Figure \ref{fig:structural_profiles} confirms, protagonists actively monopolize interiority ($I = 23.4\%$). The core thematic engine of the novel relies heavily on this internal axis, ensuring that Elizabeth and Darcy are the only vectors who systematically process the raw social environment within a private psychological domain. 
+
+Conversely, as the narrative descends into the Major and Minor Secondary tiers, Interiority plummets drastically (dropping to $12.0\%$ and $10.0\%$, respectively). Instead, these supporting characters are sharply externalized, locking their statistical distributions into Name mentions ($N$) and External Discussion ($DC$). Ultimately, secondary characters are not flat because of an arbitrary lack of development; they are structurally optimized as relational fixtures. Austen strictly bounds their inner lives so they can function cleanly as predictable social forces, leaving the deeper, multi-dimensional psychological vector space exclusively for the mental evolution of her protagonists.
+
+\section{Univariate Component Mechanics (Omnibus ANOVA)}
+To examine the underlying drivers behind this multidimensional variance, a series of One-Way Analysis of Variance (ANOVA) tests were performed across each independent outcome variable. This step calculates the overall ``Signal-to-Noise'' ratio, comparing the variance between narrative groups to the variance within them to confirm whether the structural differences between roles are genuinely meaningful or merely artifacts of sample variance.
+
+\begin{table}[H]
+\centering
+\caption{Omnibus ANOVA Feature Summary Table}
+\label{tab:anova_omnibus}
+\vspace{2mm}
+\small
+\begin{tabular}{lccl}
+\toprule
+\textbf{Component Dimension} & \textbf{\textit{F}-Statistic} & \textbf{\textit{p}-value (ANOVA)} & \textbf{Primary Structural Signpost} \\
+\midrule
+Name ($N$)                   & 91.55 & $< 0.001$ & Tier Variance Highly Significant \\
+Discussion ($DC$)            & 46.92 & $< 0.001$ & Reputational Variation Validated \\
+Communication ($C$)          & 35.52 & $< 0.001$ & Dialogue Density Differentiates Tiers \\
+Interiority ($I$)            & 77.90 & $< 0.001$ & Extreme Group Asymmetry Isolated \\
+Description ($DN$)           & 11.87 & $< 0.001$ & Inverse Observational Signal Detected \\
+Action ($A$)                 & 54.65 & $< 0.001$ & Behavioral Volume Split Across Tiers \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As detailed in Table \ref{tab:anova_omnibus}, every continuous dimension exhibits an exceptionally robust $F$-statistic alongside strict statistical significance ($p < 0.001$). This mathematically confirms that the structural variations observed across role divisions are vastly stronger than random noise, completely verifying that character roles in \textit{Pride and Prejudice} represent distinct, structurally divergent classes rather than a single continuous gradient.
+
+\section{Pairwise Post-Hoc Metrics (Tukey HSD)}
+Having verified omnibus significance, a follow-up Tukey's Honest Significant Difference (HSD) test was applied across all possible group permutations to map exactly where the group means diverge while safely preventing family-wise Type I error inflation.
+
+\begin{table}[H]
+\centering
+\caption{Pairwise Tukey HSD Summary Matrix (Adjusted \textit{p}-values)}
+\label{tab:tukey}
+\vspace{2mm}
+\small
+\begin{tabular}{l *{3}{>{\centering\arraybackslash}p{3.3cm}}}
+\toprule
+\textbf{Metric Variable} & \textbf{Protagonist vs. Major Sec.} & \textbf{Protagonist vs. Minor Sec.} & \textbf{Major Sec. vs. Minor Sec.} \\
+\midrule
+Name ($N$)               & 0.0021 & 0.0001 & 0.0064 \\
+Discussion ($DC$)         & 0.0003 & 0.0001 & 0.0007 \\
+Communication ($C$)      & 0.0011 & 0.0001 & 0.0125 \\
+Interiority ($I$)        & 0.0002 & 0.0001 & 0.1764 \\
+Description ($DN$)       & 0.0341 & 0.0022 & 0.1356 \\
+Action ($A$)             & 0.0019 & 0.0001 & 0.1618 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two profound structural anomalies were isolated through Table \ref{tab:tukey}:
+\begin{enumerate}
+    \item \textbf{The Interiority Binary:} The post-hoc lookup for Interiority ($I$) revealed a highly non-significant difference between Major Secondary and Minor Secondary characters ($p_{\text{adj}} = 0.1764$). Austen does not scale inner psychological depth linearly. Instead, she grants a private, thinking mind exclusively to the protagonist tier, keeping the supporting cast opaque regardless of their total line counts or prominence in the plot.
+    \item \textbf{The Observer Effect:} The ANOVA for Description by the Narrator ($DN$) revealed that protagonists yield significantly lower descriptive scores than secondary characters ($DN_{\text{Prot}} < DN_{\text{Sec}}$). This provides empirical proof of the narrative observer framework: protagonists function as the subjects/lenses through which the story world is viewed. Because the lead is the one looking, the narration focuses on describing the external secondary objects they encounter rather than describing the observer.
+\end{enumerate}
+
+\section{System Architecture Mapping (Correlation Matrix Heatmaps)}
+To map how these six operational metrics interact as a coordinated system, a pairwise Pearson product-moment correlation analysis was executed. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{narrative_correlation_heatmap.pdf}
+    \caption{Pairwise Pearson product-moment correlation ($r$) matrix heatmap across the six continuous metric vectors.}
+    \label{fig:heatmap}
+\end{figure}
+
+The correlation matrix heatmap (Figure \ref{fig:heatmap}) revealed that Name ($N$), conversational Communication ($C$), and physical Action ($A$) are highly synchronized and track together as a singular force of ``plot volume.'' 
+
+Conversely, variables like Interiority ($I$) and Discussion of Character by Others ($DC$) operate on entirely uncoupled planes of variance. This provides the definitive mathematical bridge proving that a character's presence is an integrated linguistic system, unlocking the exact blueprint Austen uses to separate a character's internal mind from their external social reputation.
+
+% ==============================================================================
+% CHAPTER 5: HIGH-DIMENSIONAL VECTOR-SPACE LAYOUTS
+% ==============================================================================
+\chapter{High-Dimensional Vector-Space Layouts}
+\label{ch:high_dimensional}
+
+\section{Global Spatial Separation (MANOVA Omnibus \& Canonical Subspace)}
+To evaluate all six metric components simultaneously as a joint coordinate system and control for family-wise Type I error inflation, a Multivariate Analysis of Variance (MANOVA) was executed using Pillai's Trace. Traditional univariate models treat narrative features as isolated tracks; however, a character's structural footprint is fundamentally multivariate, defined by concurrent behaviors across multiple dimensions. The global multivariate omnibus test confirmed a highly significant multivariate distinction across the pre-defined role tiers:
+\begin{equation}
+    V = 1.145 \quad (F_{\text{approx}} = 14.82, \ p = 4.255 \times 10^{-12})
+\end{equation}
+This exceptionally low $p$-value rejects the null hypothesis that the character tiers share a common spatial center of gravity. It mathematically proves that the multidimensional centers of gravity (centroids) for the Protagonist, Major Secondary, and Minor Secondary cohorts occupy entirely distinct, non-overlapping geometric territories within the six-dimensional vector space $\mathbb{R}^6$.
+
+To visualize this high-dimensional separation, a Canonical Linear Discriminant Analysis (LDA) was executed to project the six-dimensional coordinate vectors into an optimized two-dimensional subspace that maximizes between-group variance relative to within-group variance.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{manova_separation_plot.pdf}
+    \caption{MANOVA Canonical Subspace with 95\% Group Mean Confidence Regions demonstrating distinct geographic positioning across role tiers.}
+    \label{fig:manova_subspace}
+\end{figure}
+
+The physical positioning of the group centroids and their corresponding 95\% confidence regions in Figure \ref{fig:manova_subspace} provides explicit spatial validation for the ``Interiority Binary'' captured in the post-hoc univariate lookup matrices. Looking closely at the distance separating the Major Secondary and Minor Secondary circles along the vertical axis (Canonical Axis 2), their confidence regions exhibit significant vertical overlap. 
+
+This specific configuration mirrors the high Tukey adjusted $p$-values found in the univariate lookups for Interiority ($p_{\text{adj}} = 0.1764$) and Action ($p_{\text{adj}} = 0.1618$). It proves visually that as a character transitions from a minor secondary role to a major secondary role, Austen does not scale up their inner psychological complexity or baseline behavioral volume. Instead, the supporting cast remains locked inside an equally externalized space when compared to the protagonist tier. To expand a character's narrative footprint from a minor secondary position to a major secondary anchor, Austen relies entirely on pushing their coordinate positions horizontally along Canonical Axis 1. This horizontal movement is driven exclusively by scaling external attributes, specifically External Dialogue/Reputation ($DC, \ p_{\text{adj}} = 0.00076$) and raw Name Mentions ($N, \ p_{\text{adj}} = 0.0064$), rather than granting them a deeper internal life.
+
+\section{Unsupervised Grouping Stress Test (PCA)}
+While the MANOVA pipeline confirms that our top-down, hand-assigned character tiers are mathematically distinct, it remains vulnerable to the critique of structural circularity. To execute the ultimate stress test on our structural classifications, an unsupervised Principal Component Analysis (PCA) was run on the raw data cloud, completely stripping away all class labels to let the character profiles cluster purely as a function of their intrinsic variance across the six continuous dimensions.
+
+The first two principal components account for a cumulative $84.3\%$ of the total dataset variance ($\text{PC1} = 68.1\%$, $\text{PC2} = 16.2\%$), capturing the vast majority of the informational matrix within a simplified two-dimensional biplot plane.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.80\textwidth]{pca_biplot_capture.pdf}
+    \caption{Unsupervised Principal Component Analysis (PCA) structural biplot map demonstrating bottom-up character clustering.}
+    \label{fig:pca}
+\end{figure}
+
+The unsupervised bottom-up PCA (Figure \ref{fig:pca}) independently replicates the exact three-tier architecture established in our top-down work, confirming the ``Interiority Binary'' as an authentic, structural boundary separating the character species. The vector arrows for Interiority ($I$), conversational Communication ($C$), and physical Action ($A$) point in a highly synchronized direction, anchor-weighted by Elizabeth Bennet at the absolute baseline of the matrix. 
+
+Crucially, the PCA unmasks an underlying structural asymmetry completely missed by the more conservative MANOVA omnibus: it computationally validates the divergent paths of Austen's two primary protagonists. Elizabeth Bennet's positioning is optimized along the joint vectors of active conversational Communication ($C$) and deep Interiority ($I$), proving she drives the novel through internal cognitive agency and immediate dialogic intervention. 
+
+Conversely, Mr. Darcy's coordinate profile is initially pulled toward the opposing vector quadrant, heavily weighted by Description by the Narrator ($DN$) and Discussion of Character by Others ($DC$). This provides elegant mathematical proof of Darcy's narrative construction: he is initially established from the outside as a rigid social object wrapped in community gossip, reputation, and detached narrative reporting before his vector trajectory shifts inward to meet Elizabeth's psychological plane in the final volumes.
+
+\section{Time-Series Tracking and Temporal Dynamics}
+Character architecture is not static; it unfolds across text-time. To trace continuous character trajectories and pacing, individual character appearances were mapped linearly across all 61 chapters of \textit{Pride and Prejudice}, paired with a distance-based hierarchical clustering dendrogram calculated via Ward's minimum variance method on a Euclidean distance matrix of chapter presence intervals.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{Rplot.pdf}
+    \caption{Chronological dispersion timeline across Chapters 1--61 with accompanying hierarchical clustering dendrogram.}
+    \label{fig:dispersion}
+\end{figure}
+
+The temporal tracking model visualized in Figure \ref{fig:dispersion} proves that characters cluster together mathematically based on shared \textbf{structural responsibilities} and rhythmed temporal intervals rather than immediate plot interaction or scene-sharing:
+\begin{itemize}
+    \item \textbf{The Constant Protagonist (Cluster 1):} Elizabeth Bennet occupies a completely isolated, single-element temporal cluster. Her continuous, unbroken baseline presence across all 61 chapters establishes her as the absolute operational anchor of the data universe.
+    \item \textbf{The Core Narrative Foil (Cluster 2):} Figures like Mr. Darcy, Jane Bennet, and Charles Bingley cluster together because they share long-term, continuous trajectories that parallel Elizabeth's movement, marked by predictable narrative eclipses (such as the London separation interval).
+    \item \textbf{Crisis Disruption Intervals (Cluster 3):} Characters like Lydia Bennet, George Wickham, and Lady Catherine de Bourgh cluster tightly together. The algorithm isolates them not because they are always in the same room, but because they enter the text-time in sudden, intense, high-magnitude bursts. They are structurally optimized to shock the plot at critical structural intervals, creating immediate destabilization before retreating from the active narrative space.
+    \item \textbf{Domestic Anchors and Micro-Clusters (Cluster 4):} Figures like Charlotte Lucas, Mr. Collins, and Sir William Lucas form a distinct sub-cluster. Their shared statistical intervals map precisely to tracking permanent geographic shifts in narrative setting away from Hertfordshire (the Hunsford and Rosings chapters), serving as stationary focal points for the middle volume's social ecosystem.
+\end{itemize}
+This successfully satisfies the tracking of continuous character trajectories over text-time, proving that Jane Austen coordinates her plot pacing and novelistic architecture through a mathematically deliberate, highly balanced economy of rhythmic intervals.
+
+% ==============================================================================
+% CHAPTER 6: EPISODIC VOLATILITY AND MAHALANOBIS ANOMALY TRACKING
+% ==============================================================================
+\chapter{Quantitative Measures of Local Interiority Volatility}
+\label{ch:mahalanobis_volatility}
+
+\section{Methodological Transition: Defining the Local Coordinate Deviation}
+While the global Mahalanobis assessments executed in Chapter \ref{ch:data_provenance} validated our macro-architectural dataset boundaries, text-mining a novel linearly requires a localized tool capable of identifying transient psychological disruptions. By tracking the \textit{Local Mahalanobis Distance} ($D^2_t$) for characters across individual chapters, we precisely calculate how much an individual profile's vector shifts away from local scenic contexts.
+
+Formally, baseline behavior is established as a dynamic, two-fold mathematical and narrative construct. First, it represents a character’s typical allocation across the $\mathbb{R}^6$ feature vector space, establishing their standard balance between external narrative attributes and Interiority ($I$). Second, it incorporates the local context of any given scene, defined by the moving average vector ($\boldsymbol{\mu}_t$) of chapter $t$. To isolate localized coordinate spikes where a character's metrics sharply diverge from the chapter mean, we execute the following operation:
+\begin{equation}
+D_t^2 = (\mathbf{x}_{i,t} - \boldsymbol{\mu}_t)^T \boldsymbol{\Sigma}_t^{-1} (\mathbf{x}_{i,t} - \boldsymbol{\mu}_t)
+\end{equation}
+Where $\mathbf{x}_{i,t}$ represents the independent multi-variable vector of character $i$ inside chapter $t$, $\boldsymbol{\mu}_t$ represents the local structural average baseline calculated across that specific chapter slot, and $\boldsymbol{\Sigma}_t^{-1}$ signifies the inverse localized covariance matrix. A deviation from this baseline signifies a local spike ($D^2_t$), which mathematically indexes a shift away from standard social tracking and into an acute state of heightened interiority expression or dramatic plot intervention.
+
+Together, these dynamic tracking lines translate raw statistical text data into a rigorous roadmap of internal character development, emotional tension, and the structural depths of Jane Austen's character interiority.
+
+\section{Chronological Trajectory Trends}
+Our first visualization tracks the shifting paths of individual character baseline values across the continuous timeline of the novel, mapping the shifting structural patterns of the major cast.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{chronological_line_plot.pdf}
+    \caption{Dynamic Local Mahalanobis Distance Squared ($D^2_t$) trends mapped per chapter baseline for primary character profiles.}
+    \label{fig:line_plot}
+\end{figure}
+
+Think of Figure \ref{fig:line_plot} as tracking the changing pulse rate of the novel's main characters' minds. The vertical axis measures how far a character's emotional status deviates from their interiority baseline ($D^2_t$), while the horizontal axis moves through the 61 chapters, divided into the book's three original volumes.
+
+This line chart connects the chapters and sequentially reveals the psychological momentum of the story. Elizabeth Bennet and Mr. Darcy clearly drive the highest peaks on the chart. What is most interesting is how their minds move in parallel: when Elizabeth's $I$ component spikes, Darcy’s often spikes alongside her. A great example occurs in early Volume III, where their lines climb together to form the highest peak in the entire novel. This tells us that their inner lives are fundamentally bound; the narrative cannot resolve the interiority trajectory of one without significantly challenging the psychological equilibrium of the other.
+
+\section{Micro-Contextual Named Outliers}
+To discover exactly who is experiencing intense interiority peaks across the narrative timeline, the system flags specific outlier coordinate locations.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{AUSTEN_PAPER_FIGURE2.pdf}
+    \caption{Micro-Contextual Structural Outliers across the 61-chapter timeline, showing individual character labels for every significant mathematical anomaly.}
+    \label{fig:named_outliers}
+\end{figure}
+
+Figure \ref{fig:named_outliers} serves as our explicit ``scene finder.'' By printing the name of each character directly next to their data point, it translates abstract outlier points into recognizable moments of intense mental processing and emotional collision.
+
+Looking closely at the layout, we can track the focus of the $I$ component across the novel. In Volume I, we see early peaks driven by Mrs. Bennet, which captures the immediate anxieties surrounding the family's financial security and marital prospects. As we transition into Volume II, a cluster of spikes belongs to Mr. Collins, capturing the awkward internal friction he experiences as a result of his failed proposal and prideful worldview.
+
+The chart reaches its ultimate peak in Volume III, where Elizabeth and Darcy soar far above the rest of the cast. By matching these labeled points to the text, we find they correspond to the story's major interiority-heavy moments—such as Elizabeth’s deep reevaluation upon reading Darcy's letter, her panic over Lydia’s elopement, and her fiercely protective stance during Lady Catherine’s interrogation. The data proves that Elizabeth's complex interiority is the primary driving factor of the book's narrative development.
+
+\section{Global Volatility Heatmap Matrix}
+To analyze presence, absence, and internal emotional intensity all at the exact same time, we plot the entire cast on a comprehensive continuous grid matrix.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1.0\textwidth]{PAPER_FIGURE_3_CUSTOM_RED.pdf}
+    \caption{Global Narrative Volatility Heatmap Matrix across the 61-chapter continuous timeline using a customized contrast palette.}
+    \label{fig:heatmap_matrix}
+\end{figure}
+
+The macro-structural layout of Figure \ref{fig:heatmap_matrix} allows us to spot patterns in character interiority that are invisible when reading the text linearly. Notice the vertical columns of color that slash through the grid. Around continuous Chapter 7, a group of characters suddenly goes blank (indicating their temporary departure from active scene processing), while a new cluster of names turns a slightly darker shade afterwards. This captures the introduction of characters whose internal motives disrupt the ``main'' cast.
+
+The heatmap also exposes some structural symmetries in how Austen utilizes character minds. We can easily trace minor characters who stay completely quiet in Volume II, only to reappear in Volume III with darker spikes. This layout illustrates that Austen carefully manages her characters' interiority. She keeps them somewhat ``dormant'' until they are needed to spark a new transformation in the narrative.
+
+\section{Structural Outlier Profiling by Text Volume}
+To evaluate how disruptions in interiority shift across the major macro-segments of the novel, the underlying chapter anomalies were aggregated into volume-specific boxplots.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{AUSTEN_PAPER_FIGURE4.pdf}
+    \caption{Structural Outlier Distribution Boxplots by Text Volume Segment, exposing internal variance changes.}
+    \label{fig:boxplots}
+\end{figure}
+
+Figure \ref{fig:boxplots} changes our focus from individual scenes to the big picture of the novel’s original three volumes. As the novel progresses, more interiority spikes occur.
+
+The boxplots reveal a clear upward trajectory in internal volatility across the course of the novel. Look at how the shape of the plots shifts from left to right. Volume I has a tight box with a modest trail of outlier dots, demonstrating guarded, restrained interiority as characters mostly hide their true feelings behind social politeness. Volume II stays relatively ``quiet'' as the characters isolate themselves. However, look at Volume III: the box itself becomes physically thicker and sits higher up on the vertical scale, while its outlier dots soar all the way to the top of the chart.
+
+This provides a mathematical proof of Austen’s interiority pacing. Volume III represents the total breakdown of the characters' internal defense mechanisms. The model demonstrates that as the novel approaches its resolution, characters can no longer repress their hidden anxieties and desires; their interiority becomes too volatile to hide, forcing them to confront their true moral and emotional selves.
+
+\section{Isolated Top 20 Episodes of Destabilization}
+Finally, the system isolated the single highest individual local volatility scores recorded across the entire dataset to evaluate the book's absolute peak crises of narrative network disruption.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{PAPER_FIGURE_2_CORRECTED.pdf}
+    \caption{Isolated Top 20 Episodes of Narrative Network Destabilization, sorted by cumulative character impact.}
+    \label{fig:top_20}
+\end{figure}
+
+Figure \ref{fig:top_20} acts as our definitive look at the most dramatic moments in the novel, ranking characters by the total amount of internal psychological disruption they endure.
+
+The most important takeaway here is the comparison between Elizabeth Bennet and Mr. Darcy. Elizabeth’s cumulative bar length completely overtakes everyone else in the novel, including Darcy. In literary terms, this provides evidence for a major argument: Elizabeth possesses the most active, complex, and thoroughly examined interiority in the novel. The quantitative visualizations prove that Elizabeth undergoes significantly more moments that constitute interiority--be it internal processing and cognitive rewriting--in comparison to Darcy. Her mind is where the real conflict of the novel takes place.
+
+\section{Analytical Synthesis: Local Real Estate and Spot-Stealing Mechanics}
+By calculating how far an individual character’s vector ($\mathbf{x}_{i,t}$) deviates from that specific chapter's average baseline ($\boldsymbol{\mu}_t$), the formula isolates moments of acute psychological divergence. When a minor character's distance ($D_t^2$) sharply spikes, it provides quantitative proof of a temporary shift in the novel's focus. For the duration of that specific chapter, the minor character ``steals the spotlight''---not by speaking more words, but by pushing their unique, often disruptive interiority to the forefront of the narrative. This objectively captures the exact chapters where a minor character temporarily claims local protagonism.
+
+This mathematical setup reveals that in \textit{Pride and Prejudice}, Austen does not relegate minor characters to simple background figures. Instead, their sudden spikes in variance mark chapters where their internal anxieties or obsession with social status take control of the narrative:
+\begin{itemize}
+    \item \textbf{Mrs. Bennet:} Mrs. Bennet’s high baseline deviations in early chapters mathematically capture the desperate internal pressure she is facing, consumed by the feeling of necessity to preserve Longbourn and the financial survival of her five daughters. When her $D_t^2$ score spikes, it maps the moments where her frantic panic breaks through the surface and shatters the baseline of the chapter, forcing the household to operate on her emotional frequency.
+    \item \textbf{Mr. Collins:} Mr. Collins’s mathematical spikes do not imply that he has suddenly grown into a heroic protagonist. While his spikes are not that high, they are clustered together, which isolates the chapters where his inflated sense of self-importance and his devotion to Lady Catherine temporarily derail the conversation. His peak $D_t^2$ values expose the moments where his views refuse to blend into the background, which in turn creates a psychological obstacle for Elizabeth.
+    \item \textbf{Lady Catherine:} Lady Catherine’s outlier spike towards the end of Volume III exemplifies one more instance of ``stealing the spotlight''. Upon her unannounced arrival at Longbourn, her class prejudice and demand for absolute submission partially hijack the narrative landscape. For those pages, the text is dominated by the violent collision between her and Elizabeth’s interiorities.
+\end{itemize}
+Ultimately, Austen uses these outliers to represent the clash of competing interiorities. Whenever a minor character's $D_t^2$ value diverges from the chapter mean, the math identifies an instance where a secondary character's internal reality becomes potent enough that it can overpower the main plot line.
+
+\section{Section Appendix: Local Volatility Summary Distributions}
+To back up these visual findings numerically, Table \ref{tab:summary_stats} provides the formal five-number summary for a selection of the core characters. This defines what qualifies as a normal or baseline state of mind within our localized distance engine.
+
+\begin{table}[H]
+\centering
+\caption{Statistical Distribution of Character Structural Outliers ($D^2_t$ Metrics)}
+\label{tab:summary_stats}
+\vspace{2mm}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Character} & \textbf{Chapters} & \textbf{Min} & \textbf{Q1} & \textbf{Median} & \textbf{Q3} & \textbf{Max} \\
+\midrule
+Elizabeth      & 61 & 0.233 & 4.278 & 9.995 & 20.986 & 178.653 \\
+Mr. Darcy      & 49 & 0.207 & 1.168 & 4.164 & 16.154 & 142.230 \\
+Mrs. Bennet    & 45 & 0.200 & 1.103 & 2.476 &  5.859 &  86.774 \\
+Mr. Bingley    & 42 & 0.056 & 1.053 & 2.208 &  4.825 &  56.079 \\
+Lady Catherine & 26 & 0.142 & 0.769 & 1.826 &  2.276 &  55.375 \\
+Wickham        & 34 & 0.056 & 1.617 & 2.673 &  6.099 &  31.375 \\
+Mr. Collins    & 29 & 0.188 & 0.889 & 2.292 &  5.019 &  22.085 \\
+Jane           & 52 & 0.235 & 1.125 & 2.322 &  4.104 &  14.317 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This table reveals the explicit boundaries of character behavior. The most interesting comparison can be found by looking at \textbf{Elizabeth} alongside her sister \textbf{Jane}. Jane is present in 52 chapters, and Elizabeth is in 61. They are both important characters who experience the same external plot events. Yet, Jane's Maximum emotional spike is a modest $14.317$, while Elizabeth's shoots up to $178.653$. Jane's numbers stay tightly grouped around her low median ($2.322$), mathematically proving that her interiority is predictable and stable. One might argue that she acts as the emotional anchor of the novel because she always consistently exercises composure and emotional restraint.
+
+Conversely, Elizabeth's massive leap from her third quartile ($20.986$) to her maximum ($178.653$) isolates her explosive interiority spikes. Any data point in Figure \ref{fig:line_plot} or Figure \ref{fig:named_outliers} that climbs past a character's third quartile ($Q3$) can be interpreted as a moment where that character is actively fighting with their own prejudices, reevaluating their moral judgments, or undergoing a major psychological transformation. The metrics show that Elizabeth's interiority variance lies in the central axis of \textit{Pride and Prejudice.}
+
+% ==============================================================================
+% CHAPTER 7: MACRO-TEMPORAL TOPOLOGY & CONTINUOUS RIEMANN INTEGRATION
+% ==============================================================================
+\chapter{Macro-Temporal Topology: Partition-Norm Limits and Riemann Trajectory Integration}
+\label{ch:riemann_calculus}
+
+To bridge the analytical gap between static multidimensional spatial centroids (as established by omnibus MANOVA and canonical projections in Chapters \ref{ch:categorical_verification} and \ref{ch:high_dimensional}) and the continuous, fluctuating temporal realities of narrative progression, this chapter formalizes character prominence as a dynamic macro-temporal topology. 
+
+Traditional digital humanities approaches frequently summarize a text by compiling aggregate, end-of-novel frequency tallies or overall word counts. This approach introduces a severe flattening artifact: it treats a character who maintains a predictable, steady presence in every chapter identically to a character who experiences a localized, intense burst of structural action in a single sequence before completely disappearing from the textual stage. 
+
+To preserve the sequential mechanics of Jane Austen's plotting, we conceptualize the absolute 61-chapter timeline of \textit{Pride and Prejudice} as a continuous, bounded interval over which characters accumulate narrative real estate. By formalizing our six-dimensional character feature vectors as time-varying functions and executing a definite trapezoidal Riemann integration, we precisely quantify both the absolute structural footprint and the component-specific composition of character prominence over textual time.
+
+\section{Mathematical Formalization of the Continuous Trajectory Space}
+Let the text of the novel be partitioned into a sequential, discrete set of absolute chronological units corresponding to chapters, denoted by the ordered set:
+\begin{equation}
+T = \{t_1, t_2, t_3, \dots, t_n\} \subset \mathbb{R}
+\end{equation}
+where $n = 61$ represents the total absolute chapter count of the text. For any individual character $i$ within the validated active dataset, their position at a given chapter interval $t$ is defined by a coordinate state within a six-dimensional vector space, formalized as:
+\begin{equation}
+\mathbf{C}_{i}(t) = \langle N_i(t), \, DC_i(t), \, C_i(t), \, I_i(t), \, DN_i(t), \, A_i(t) \rangle \in \mathbb{R}^6
+\end{equation}
+where the basis axes correspond to the independent, raw data tracks tracking Name Mentions ($N$), External Discussion ($DC$), active conversational Communication ($C$), psychological Interiority ($I$), Description by the Narrator ($DN$), and plot Action ($A$). 
+
+To evaluate a character's holistic presence without isolating specific linguistic behaviors, we calculate the Euclidean norm (or absolute vector magnitude) of the character's coordinate state for each discrete chapter slot. This collapses their multi-variable network presence into a scalar trajectory function representing their total raw spatial intensity at any point in narrative time:
+\begin{equation}
+\|\mathbf{C}_{i}(t)\| = \sqrt{N_i(t)^2 + DC_i(t)^2 + C_i(t)^2 + I_i(t)^2 + DN_i(t)^2 + A_i(t)^2}
+\end{equation}
+
+\section{The Generalized Riemann Integration Model}
+To calculate the total structural footprint a character leaves across the entire architecture of the novel, we measure the definite geometric area bounded by their continuous trajectory curve across the interval $[1, n]$. Because our structural data is collected at discrete chapter intervals, the continuous trajectory is approximated by constructing a piece-wise linear function across the timeline.
+
+Formally, we define a partition $P$ of the closed interval $[1, n]$ into $n-1$ subintervals:
+\begin{equation}
+1 = t_1 < t_2 < t_3 < \dots < t_n = 61
+\end{equation}
+where the width of each regular subinterval step is constant, such that $\Delta t = t_{j} - t_{j-1} = 1$. The ultimate narrative volume granted to a character $i$, designated as the Comprehensive Textual Volume ($V_{\text{Total}}$), is defined as the definite Riemann integral of the composite vector magnitude over the entire chronological continuum:
+\begin{equation}
+V_{\text{Total}, i} = \int_{1}^{n} \|\mathbf{C}_{i}(t)\| \, dt = \lim_{\|P\| \to 0} \sum_{j=2}^{n} f(c_j) \Delta t
+\end{equation}
+where $\|P\|$ represents the norm of the partition, and $c_j$ is a sample point within the subinterval. 
+
+To execute this operation over our empirical data matrix without introducing artificial step-function errors, the system runs a trapezoidal approximation loop (via the \texttt{pracma::trapz} engine). This method evaluates the average vector magnitude across adjacent chapters, calculating the area of the trapezoidal columns under the curve:
+\begin{equation}
+V_{\text{Total}, i} \approx \sum_{j=2}^{n} \left( \frac{\|\mathbf{C}_{i}(t_{j-1})\| + \|\mathbf{C}_{i}(t_j)\|}{2} \right) (t_j - t_{j-1})
+\end{equation}
+
+This metric yields a single, definitive value representing the complete real estate—both external and internal—that Austen allocates to a character. High scores require sustainable presence: a character cannot achieve a top-tier $V_{\text{Total}}$ solely through a brief, high-intensity plot explosion; they must maintain a long-term, durable structural momentum across the timeline.
+
+\section{Empirical Evaluation of Macro-Temporal Trajectories}
+
+\subsection{The Multi-Panel Landscape of Textual Real Estate}
+To visualize the continuous distribution of these integrated vector magnitudes, the system maps the top twelve characters by cumulative volume onto parallel, independent temporal axes.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{FIGURE_MASTER_12_PANEL_HORIZON_MAP.pdf}
+\caption{The Macro-Temporal Horizon: Continuous Riemann Volume Distribution across the Top 12 Most Implicated Characters ($1 \le t \le 61$).}
+\label{fig:twelve_panel_horizon}
+\end{figure}
+
+As exhibited in Figure \ref{fig:twelve_panel_horizon}, the multi-panel baseline reveals the specific geometric configurations underlying protagonist dominance. Elizabeth Bennet’s trajectory operates as a high-volume, uninterrupted continuous wave across all 61 chapters, establishing an absolute structural baseline. Conversely, secondary characters display highly localized, pulsed configurations. 
+
+Lydia Bennet and Mr. Collins exhibit zero baseline volume across the first half of the timeline, interrupted by sudden, extreme geometric spikes corresponding to structural plot disruptions (the Hunsford proposals for Collins; the elopement crisis for Lydia). This visual distribution confirms that secondary characters occupy highly rationed, bounded chronological corridors, functioning as temporary structural disturbances rather than ongoing focal points.
+
+\subsection{Component Deconstruction and the Asymmetry of Construction}
+To expose the specific constituent dimensions driving these integrated values, Figure \ref{fig:facet_seven_components} deconstructs the absolute integrated volumes across all six baseline channels and the global Mahalanobis anomaly score ($D^2$).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{FINAL_PUBLICATION_FACET_PLOT_7_COMPONENTS.pdf}
+\caption{True Macro-Structural Volume Landscape: Definite Riemann Integration Deconstructed Across the Six Baseline Matrix Dimensions and Global Anomaly Trajectories ($D^2$).}
+\label{fig:facet_seven_components}
+\end{figure}
+
+The structural deconstruction in Figure \ref{fig:facet_seven_components} reveals a critical architectural asymmetry between the two protagonists. While Elizabeth Bennet simultaneously dominates the communication ($C$), action ($A$), and interiority ($I$) volumes, Mr. Darcy’s total volume profile is fundamentally decoupled. In the early stages of the novel, Darcy’s high overall prominence is driven entirely from the outside—scaled up through narrator description ($DN$) and external community discussion ($DC$). 
+
+This confirms our unsupervised PCA findings: Elizabeth is constructed as an active processing \textit{Subject} who commands narrative real estate through immediate internal and conversational agency, whereas Darcy is initially fabricated as a rigid, observed social \textit{Object} whose structural weight is generated by the gossip and surveillance of the surrounding social network.
+
+\section{Isolating the Interiority Binary over Textual Time}
+While the generalized 6D vector volume maps a character's total spatial footprint, it can obscure the specific structural ingredients that make up that presence. To test the validity and durability of our proposed \textit{Interiority Binary} over chronological time, we pivot from the generalized vector norm to an isolated, component-specific integration. We extract the individual dimension corresponding to internal cognitive processing, $I_i(t)$, and define the Isolated Interiority Volume ($V_{\text{Interiority}}$) as:
+\begin{equation}
+V_{\text{Interiority}, i} = \int_{1}^{n} I_i(t) \, dt \approx \sum_{j=2}^{n} \left( \frac{I_i(t_{j-1}) + I_i(t_j)}{2} \right)
+\end{equation}
+
+By plotting these isolated internal paths alongside a stacked distribution of cumulative 6D geometric masses, the architectural enforcement of the Interiority Binary becomes visually undeniable.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{RIEMANN_COMPOSITE_VECTOR_INTEGRATION_MAP.pdf}
+\caption{The Geometric Mass of Narrative Importance: Total Cumulative Stacked Riemann Integration Volume Across the 61-Chapter Timeline.}
+\label{fig:riemann_stacked_mass}
+\end{figure}
+
+As illustrated by the stacked geometric masses in Figure \ref{fig:riemann_stacked_mass}, when characters are evaluated using their combined 6D vector footprints, the supporting cast expands dramatically, capturing a massive proportion of the total text-space. During the Volume 3 elopement crisis, Lydia Bennet and Mrs. Bennet occupy a major share of the vertical geometric axis, driving the physical mechanics of the plot. However, when we isolate the interiority dimension and track the continuous shaded curves in Figure \ref{fig:chronological_shaded_curves}, the supporting cast is completely flattened.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{CHRONOLOGICAL_RIEMANN_SHADED_CURVES.pdf}
+\caption{The Trajectory of Character Interiority over Textual Time: Continuous Shaded Riemann Definite Integration Areas for Isolated Component $I$.}
+\label{fig:chronological_shaded_curves}
+\end{figure}
+
+The parallel timelines in Figure \ref{fig:chronological_shaded_curves} provide empirical confirmation of our univariate Tukey post-hoc diagnostics ($p = 0.1764$). While secondary characters like Mrs. Bennet fluctuate wildly in external communication and name mentions, their isolated interiority curves remain locked at a flat, zero-volume baseline. 
+
+Austen allows her supporting cast to grow horizontally within the 6D plot space, but she enforces a strict, unyielding mathematical boundary that blocks them from accumulating psychological volume. Deep internal cognitive processing is a highly protected structural property reserved exclusively for the protagonists.
+
+\section{Inter-Subjective Synchronization: Covariance and Typologies}
+
+\subsection{The Convergence of Minds: Elizabeth and Darcy}
+Because interiority is restricted to the protagonists, the narrative progression of the novel is driven by how these two private mental spaces interact. Figure \ref{fig:elizabeth_darcy_covariance} overlays the isolated interiority curves of Elizabeth and Darcy on a single axis to track their mathematical covariance.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.95\textwidth]{TIMELINE_ELIZABETH_DARCY_COVARIANCE.pdf}
+\caption{The Convergence of Minds: Direct Covariance of Isolated Interiority ($I$) Tracks Across 61 Absolute Chapters.}
+\label{fig:elizabeth_darcy_covariance}
+\end{figure}
+
+The overlapping tracks in Figure \ref{fig:elizabeth_darcy_covariance} map the structural alignment of the romance. Early in the novel, the curves display a clear negative covariance: when Darcy's internal intensity spikes, Elizabeth's remains low, reflecting their structural isolation. 
+
+However, following the midpoint turning point of Darcy’s Hunsford letter (Chapters 35–36), their interiority peaks and valleys begin to lock into a synchronized pattern. Before they agree to marry on a plot level, their continuous psychological trajectories achieve a structural alignment, proving that Austen mirrors her characters' minds mathematically before finalizing their social union.
+
+\subsection{The Master Character Topology Quadrant}
+Finally, by integrating the total accumulated values for both external plot movement ($\int A \, dt$) and internal cognitive weight ($\int I \, dt$) across the entire novel, we can construct an objective typology of the entire cast.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{MASTER_CHARACTER_QUADRANT_SCATTERPLOT.pdf}
+\caption{Austenian Character Topology Map: Total Integrated Action Volume ($\int A \, dt$) vs. Accumulated Interiority Volume ($\int I \, dt$), with Points Sized by Global Anomaly Volume.}
+\label{fig:quadrant_scatterplot}
+\end{figure}
+
+The coordinate layout in Figure \ref{fig:quadrant_scatterplot} provides an empirical replacement for traditional, impressionistic character classifications. The space splits the cast into four distinct structural quadrant profiles:
+\begin{enumerate}
+    \item \textbf{High Action / High Interiority (Top-Right Quadrant):} The Core Narrative Engines (Elizabeth and Darcy) who simultaneously drive external events and process their psychological consequences.
+    \item \textbf{Low Action / High Interiority (Top-Left Quadrant):} The Reflective Observers, where characters are granted localized mental depth but possess minimal agency to alter the plot space.
+    \item \textbf{High Action / Low Interiority (Bottom-Right Quadrant):} The Plot Disruptors (Lydia Bennet, Mr. Collins, and Wickham). These characters accumulate massive volume through external communication and physical movement, but they register an interiority volume near zero, confirming they cause structural chaos without experiencing internal growth.
+    \item \textbf{Low Action / Low Interiority (Bottom-Left Quadrant):} The Satirical Background (Mary Bennet, Kitty Bennet), who fill space within the social landscape but lack both agency and psychological depth.
+\end{enumerate}
+
+This topological distribution proves that character roles in the realist novel are not defined by random variations or a smooth linear gradient. Rather, they represent an intentional, highly optimized structural architecture designed to partition the social landscape from the private mind.
