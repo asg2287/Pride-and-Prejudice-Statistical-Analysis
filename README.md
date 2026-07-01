@@ -1,8 +1,9 @@
 # Multi-Dimensional Statistical Analysis of Jane Austen's *Pride and Prejudice*
 
-Developed by **Alexander Georgiev** *Undergraduate Research Fellow, Columbia University* *Project Advisors: Professor Sharon Marcus (Orlando Harriman Professor of English & Comparative Literature)*
+Developed by **Alexander Georgiev** 
+*Undergraduate Research Fellow, Columbia University*
 
-This repository houses the end-to-end computational pipeline and R implementation scripts used to model Jane Austen's *Pride and Prejudice* as a closed, signal-processing system. By translating textual attributes into multi-dimensional coordinates, this project maps the hidden narrative regularities, character hierarchies, and formal constraints governing the novel's structure.
+This repository houses the end-to-end computational pipeline and R implementation scripts used to model Jane Austen's *Pride and Prejudice* as a closed, signal-processing system. By translating textual attributes into multi-dimensional coordinates, this project analyzes hidden narrative specifics, character hierarchies, and formal constraints governing the novel's structure.
 
 ---
 
