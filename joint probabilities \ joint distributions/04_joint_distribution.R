@@ -72,9 +72,9 @@ p2 <- ggplot(full_network, aes(x = DC, y = I)) +
   theme_minimal() +
   labs(
     title = "Joint Scatter Space: DC vs. I",
-    subtitle = "Direct Connectivity vs. Latent Social Leverage",
-    x = "Degree Centrality (Direct Structural Connections)",
-    y = "Indirect Network Ties (Multi-hop Leverage)"
+    subtitle = "Discussion of Character by Others vs. Interiority",
+    x = "Discussion of Character by Other Characters",
+    y = "Interiority"
   ) +
   theme(plot.title = element_text(face = "bold", size = 12))
 
