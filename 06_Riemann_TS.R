@@ -1,0 +1,177 @@
+
+rm(list = ls())
+
+library(tidyverse)
+library(readxl)
+library(pracma)   
+library(MASS)
+library(ggrepel)
+library(patchwork)
+library(RColorBrewer)
+
+home_dir   <- "/Users/ale"
+
+excel_path <- file.path(home_dir, "Desktop", "Pride and Prejudice", "Pride and Prejudice, Summer 2026.xlsx")
+
+
+raw_chapters <- read_xlsx(excel_path, .name_repair = "unique")
+
+cat("--- RAW LONGITUDINAL COLUMNS DETECTED ---\n")
+print(colnames(raw_chapters))
+cat("Total rows loaded:", nrow(raw_chapters), "\n----------------------------------------\n")
+
+cols <- colnames(raw_chapters)
+
+if(!"Volume" %in% cols)  colnames(raw_chapters)[1] <- "Volume"
+if(!"Chapter" %in% cols) colnames(raw_chapters)[2] <- "Chapter"
+if(!"Character" %in% cols) {
+  colnames(raw_chapters)[3] <- "Character"
+}
+
+components <- c("N", "DC", "C", "I", "DN", "A")
+for(i in seq_along(components)){
+  comp_idx <- which(toupper(colnames(raw_chapters)) == components[i])
+  if(length(comp_idx) == 0 && i <= ncol(raw_chapters)) {
+    colnames(raw_chapters)[3 + i] <- components[i]
+  }
+}
+
+if("ALL INSTANCES TOTAL" %in% colnames(raw_chapters)) {
+  raw_chapters <- raw_chapters %>% rename(Total_Score = `ALL INSTANCES TOTAL`)
+} else if(!"Total_Score" %in% colnames(raw_chapters)) {
+  raw_chapters$Total_Score <- rowSums(raw_chapters[, intersect(colnames(raw_chapters), components)], na.rm = TRUE)
+}
+
+
+raw_chapters <- raw_chapters %>%
+  filter(!is.na(Character)) %>%
+  mutate(across(intersect(colnames(raw_chapters), c("Volume", "Chapter", components, "Total_Score")), ~ as.numeric(replace_na(.x, 0))))
+
+
+raw_chapters <- raw_chapters %>%
+  mutate(Absolute_Chapter = case_when(
+    Volume == 1 ~ Chapter, 
+    Volume == 2 ~ Chapter + 23, 
+    Volume == 3 ~ Chapter + 42, 
+    TRUE ~ Chapter
+  ))
+
+matrix_6d   <- as.matrix(raw_chapters %>% dplyr::select(all_of(components)))
+cov_matrix  <- cov(matrix_6d)
+mean_vector <- colMeans(matrix_6d)
+raw_chapters <- raw_chapters %>% mutate(D2 = mahalanobis(matrix_6d, mean_vector, cov_matrix))
+
+global_integration <- raw_chapters %>%
+  mutate(Character = str_trim(Character)) %>%
+  group_by(Character) %>%
+  complete(Absolute_Chapter = 1:61, fill = list(Total_Score = 0, D2 = 0)) %>%
+  summarise(
+    `Total Score Volume`        = pracma::trapz(Absolute_Chapter, Total_Score),
+    `Global Anomaly Score (D²)` = pracma::trapz(Absolute_Chapter, D2),
+    .groups = 'drop'
+  )
+
+top_12_characters_TS <- raw_chapters %>% 
+  group_by(Character) %>% 
+  summarise(Total = sum(Total_Score, na.rm = TRUE)) %>% 
+  slice_max(Total, n = 12, with_ties = FALSE) %>% 
+  pull(Character)
+
+theme_manuscript <- function() {
+  theme_minimal(base_size = 11, base_family = "serif") +
+    theme(
+      plot.title        = element_text(face = "bold", size = 12, hjust = 0.5),
+      plot.subtitle     = element_text(size = 10, face = "italic", hjust = 0.5),
+      panel.border      = element_blank(),
+      axis.line         = element_line(color = "black", linewidth = 0.5),
+      strip.background  = element_blank(),
+      strip.text        = element_text(face = "bold", size = 10),
+      axis.title        = element_text(face = "bold", size = 11),
+      legend.position   = "bottom"
+    )
+}
+
+
+cat("Generating plots...\n")
+
+fig1_1_data <- raw_chapters %>% 
+  filter(Character %in% top_12_characters_TS) %>%
+  group_by(Character) %>%
+  complete(Absolute_Chapter = 1:61, fill = list(Total_Score = 0))
+
+fig1_1 <- ggplot(fig1_1_data, aes(x = Absolute_Chapter, y = Total_Score)) +
+  geom_area(fill = "#34495E", alpha = 0.7, color = "#2C3E50", linewidth = 0.3) +
+  facet_wrap(~ factor(Character, levels = top_12_characters_TS), ncol = 2, scales = "free_y") +
+  scale_x_continuous(limits = c(1, 61), breaks = c(1, 10, 21, 31, 41, 51, 61)) +
+  labs(title = "Figure 1.1: Total Score Vector Trajectories", subtitle = "Continuous Riemann Distribution of Total Aggregated Narrative Score", x = "Chapters 1-61", y = "Total Score Intensity") +
+  theme_manuscript()
+ggsave(file.path(home_dir, "FIGURE_1_1_TOTAL_SCORE_TRAJECTORIES.png"), plot = fig1_1, width = 9.5, height = 11, units = "in", dpi = 300)
+
+top_15_macro <- global_integration %>% slice_max(`Total Score Volume`, n = 15, with_ties = FALSE)
+fig1_2 <- ggplot(top_15_macro, aes(x = reorder(Character, `Total Score Volume`), y = `Total Score Volume`, fill = `Total Score Volume`)) +
+  geom_bar(stat = "identity", color = "grey40", linewidth = 0.2, width = 0.7) +
+  scale_fill_gradient(low = "#5D6D7E", high = "#1A5276") +
+  coord_flip() +
+  labs(title = "Figure 1.2: Net Macro-Structural Narrative Volume", subtitle = "Definite Riemann Integration of Aggregated Total Scores Over 61 Chapters", x = NULL, y = "Accumulated Total Score Volume") +
+  theme_manuscript() + theme(legend.position = "none")
+ggsave(file.path(home_dir, "FIGURE_1_2_TOTAL_SCORE_MACRO_LANDSCAPE.png"), plot = fig1_2, width = 9.5, height = 6.5, units = "in", dpi = 300)
+
+plot_data_13 <- raw_chapters %>% 
+  filter(Character %in% top_12_characters_TS) %>%
+  group_by(Character) %>%
+  complete(Absolute_Chapter = 1:61, fill = list(Total_Score = 0)) %>%
+  ungroup() %>%
+  mutate(Character = fct_reorder(Character, Total_Score, .fun = sum))
+num_chars <- length(unique(plot_data_13$Character))
+my_palette <- colorRampPalette(brewer.pal(12, "Paired"))(num_chars)
+
+fig1_3 <- ggplot(plot_data_13, aes(x = Absolute_Chapter, y = Total_Score, fill = Character)) +
+  geom_area(position = "stack", alpha = 0.85, color = "white", linewidth = 0.1) +
+  scale_fill_manual(values = my_palette, name = "Total Score Hierarchy") +
+  labs(title = "Figure 1.3: Geometric Mass of Total Aggregated Value", subtitle = "Cumulative Riemann Integration of Total Scores Across 61 Chapters", x = "Chapters 1-61", y = "Stacked Net Narrative Magnitude") +
+  theme_manuscript() + theme(legend.position = "right")
+ggsave(file.path(home_dir, "FIGURE_1_3_GEOMETRIC_MASS_OF_TOTAL_SCORE.png"), plot = fig1_3, width = 10, height = 6.5, units = "in", dpi = 300)
+
+core_4_data <- raw_chapters %>% 
+  filter(Character %in% c("Elizabeth", "Jane", "Mr. Darcy", "Mrs. Bennet")) %>%
+  group_by(Character) %>%
+  complete(Absolute_Chapter = 1:61, fill = list(Total_Score = 0))
+
+fig1_4 <- ggplot(core_4_data, aes(x = Absolute_Chapter, y = Total_Score, color = Character, fill = Character)) +
+  geom_area(alpha = 0.15, linewidth = 0.5) + geom_line(linewidth = 0.8) + 
+  facet_wrap(~ factor(Character, levels = c("Elizabeth", "Mr. Darcy", "Jane", "Mrs. Bennet")), ncol = 1, scales = "free_y") +
+  scale_color_manual(values = c("Elizabeth" = "#D9534F", "Jane" = "#5CB85C", "Mr. Darcy" = "#5BC0DE", "Mrs. Bennet" = "#9B59B6")) +
+  scale_fill_manual(values = c("Elizabeth" = "#D9534F", "Jane" = "#5CB85C", "Mr. Darcy" = "#5BC0DE", "Mrs. Bennet" = "#9B59B6")) +
+  labs(title = "Figure 1.4: Trajectory of Aggregated Total Scores", x = "Chapters 1-61", y = "Net Total Score") +
+  theme_manuscript() + theme(legend.position = "none")
+ggsave(file.path(home_dir, "FIGURE_1_4_TRAJECTORY_OF_TOTAL_SCORE.png"), plot = fig1_4, width = 9.0, height = 8, units = "in", dpi = 300)
+
+dyad_data <- raw_chapters %>% 
+  filter(Character %in% c("Elizabeth", "Mr. Darcy")) %>%
+  group_by(Character) %>%
+  complete(Absolute_Chapter = 1:61, fill = list(Total_Score = 0))
+
+fig1_5 <- ggplot(dyad_data, aes(x = Absolute_Chapter, y = Total_Score, color = Character)) +
+  geom_line(linewidth = 1.2) + 
+  scale_color_manual(values = c("Elizabeth" = "#C0392B", "Mr. Darcy" = "#2980B9")) +
+  annotate("rect", xmin = 35, xmax = 36, ymin = -Inf, ymax = Inf, alpha = 0.3, fill = "#F39C12") +
+  labs(title = "Figure 1.5: Macro-Temporal Net Presence Dynamics: Elizabeth and Darcy", subtitle = "Direct Covariance of Aggregated Total Scores Across the 61 Chapters", x = "Chapters 1-61", y = "Net Total Score Metric") +
+  theme_manuscript()
+ggsave(file.path(home_dir, "FIGURE_1_5_TOTAL_SCORE_COVARIANCE.png"), plot = fig1_5, width = 9.5, height = 5.5, units = "in", dpi = 300)
+
+v_ts_mean  <- mean(global_integration$`Total Score Volume`, na.rm = TRUE)
+v_d2_mean  <- mean(global_integration$`Global Anomaly Score (D²)`, na.rm = TRUE)
+
+fig1_6 <- ggplot(global_integration, aes(x = `Total Score Volume`, y = `Global Anomaly Score (D²)`, label = Character)) +
+  geom_vline(xintercept = v_ts_mean, linetype = "dashed", color = "grey60", linewidth = 0.5) +
+  geom_hline(yintercept = v_d2_mean, linetype = "dashed", color = "grey60", linewidth = 0.5) +
+  geom_point(aes(size = `Total Score Volume`, color = `Global Anomaly Score (D²)`), alpha = 0.75) +
+  geom_text_repel(family = "serif", size = 3.5, fontface = "bold", max.overlaps = 15) +
+  scale_color_gradient(low = "#EBF5FB", high = "#1F618D") +
+  labs(title = "Figure 1.6: Net Narrative Topology Map", 
+       x = "Accumulated Total Score Volume (Definite Integration)", 
+       y = "Accumulated Global Anomaly Volume (D²)") +
+  theme_manuscript() + theme(legend.position = "right")
+ggsave(file.path(home_dir, "FIGURE_1_6_TOTAL_SCORE_TOPOLOGY_MAP.png"), plot = fig1_6, width = 9, height = 7, units = "in", dpi = 300)
+
+message("Success! All 6 figures have been beautifully computed, fully populated, and saved to /Users/ale/")
