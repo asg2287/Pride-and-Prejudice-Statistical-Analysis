@@ -16,20 +16,20 @@ The codebase is organized into modular directories reflecting the chronological 
 ├── 📁 clustering/                   # Step 1: Character Hierarchy, Clustering and Subclustering
 │   └── [Scripts]                  
 │
-├── 📁 testing/                      # Step 2: Multivariate Diagnostic Testing
+├── 📁 testing/                       # Step 2: Multivariate Diagnostic Testing
 │   └── [Scripts]                   
 │
-├── 📁 intensification/              # Step 3: Intensification Analysis Across the 6 Components
-│   └── [Scripts]               
+├── 📁 intensification/                # Step 3: Intensification Analysis Across the 6 Components
+│   └── [Scripts]                
 │
-├── 📁 joint_distributions/          # Step 4: Structural Cross-Correlations
+├── 📁 joint_distributions/             # Step 4: Structural Cross-Correlations
 │   └── [Scripts]                  
 │
-├── 📁 rhythms/                      # Step 5: Narrative Rhythms of Presence and Absence by K-Means Cluster
+├── 📁 rhythms/                          # Step 5: Narrative Rhythms of Presence and Absence by K-Means Cluster
 │   └── [Scripts]                 
 │
-├── 📁 riemann/                      # Step 6: Cumulative Geometric Mass and Definite Riemann Integration
+├── 📁 riemann/                           # Step 6: Cumulative Geometric Mass and Definite Riemann Integration
 │   └── [Scripts]                  
 │
-└── 📁 percentage_data/              # Step 7: Relative Architectural Composition and Percentage-Based Analysis
+└── 📁 percentage_data/                     # Step 7: Relative Architectural Composition and Percentage-Based Analysis
     └── [Scripts]                  
